@@ -27,6 +27,10 @@ class AppConstants {
   static const double defaultRadius = 12.0;
   static const double minTouchTarget = 44.0;
 
+  // 앱 아이콘 및 로고 경로
+  static const String appIcon = 'assets/icons/icon.png';
+  static const String appIconSvg = 'assets/icons/icon_template.svg';
+
   // 정규표현식 패턴
   // 성경 구절 참조: "마태복음 1:13", "창 1:1" 등
   static final RegExp verseReferencePattern = RegExp(

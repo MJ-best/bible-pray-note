@@ -86,6 +86,9 @@ flutter:
   assets:
     - assets/bible/kor.xml
     - assets/bible/NIV_bible.json
+    # App icons for internal use
+    - assets/icons/icon.png
+    - assets/icons/icon_template.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -121,8 +124,8 @@ flutter_launcher_icons:
   min_sdk_android: 21 # Android min SDK
 
   # Optional: Adaptive icon for Android (API 26+)
-  adaptive_icon_background: "#1A237E"  # Deep indigo blue
-  adaptive_icon_foreground: "assets/icons/icon_foreground.png"
+  # adaptive_icon_background: "#1A237E"  # Deep indigo blue
+  # adaptive_icon_foreground: "assets/icons/icon_foreground.png"
 
   # Optional: Custom icon for specific platforms
   # ios:
