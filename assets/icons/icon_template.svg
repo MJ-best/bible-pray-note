@@ -1,0 +1,19 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="#1A237E"/>
+
+  <!-- Decorative notebook lines (subtle) -->
+  <line x1="200" y1="650" x2="824" y2="650" stroke="#FFFFFF" stroke-width="3" opacity="0.2"/>
+  <line x1="200" y1="700" x2="824" y2="700" stroke="#FFFFFF" stroke-width="3" opacity="0.2"/>
+  <line x1="200" y1="750" x2="824" y2="750" stroke="#FFFFFF" stroke-width="3" opacity="0.2"/>
+
+  <!-- Cross - Modern style with rounded corners -->
+  <!-- Vertical bar -->
+  <rect x="452" y="250" width="120" height="500" rx="20" fill="#FFC107"/>
+
+  <!-- Horizontal bar -->
+  <rect x="312" y="390" width="400" height="120" rx="20" fill="#FFC107"/>
+
+  <!-- Optional: Small bookmark accent -->
+  <polygon points="900,100 900,250 850,200" fill="#64B5F6" opacity="0.6"/>
+</svg>
