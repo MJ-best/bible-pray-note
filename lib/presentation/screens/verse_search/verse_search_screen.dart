@@ -36,7 +36,7 @@ class _VerseSearchScreenState extends State<VerseSearchScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 역본 선택
+                // 역본 선택 (다중 선택 가능)
                 Consumer<BibleViewModel>(
                   builder: (context, viewModel, _) {
                     return Row(
@@ -46,20 +46,20 @@ class _VerseSearchScreenState extends State<VerseSearchScreen> {
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(width: 12),
-                        ChoiceChip(
+                        FilterChip(
                           label: const Text('개혁개정'),
-                          selected: viewModel.currentVersion ==
-                              AppConstants.versionKorean,
+                          selected: viewModel.isVersionSelected(
+                              AppConstants.versionKorean),
                           onSelected: (_) => viewModel
-                              .setVersion(AppConstants.versionKorean),
+                              .toggleVersion(AppConstants.versionKorean),
                         ),
                         const SizedBox(width: 8),
-                        ChoiceChip(
+                        FilterChip(
                           label: const Text('NIV'),
-                          selected:
-                              viewModel.currentVersion == AppConstants.versionNIV,
+                          selected: viewModel.isVersionSelected(
+                              AppConstants.versionNIV),
                           onSelected: (_) =>
-                              viewModel.setVersion(AppConstants.versionNIV),
+                              viewModel.toggleVersion(AppConstants.versionNIV),
                         ),
                       ],
                     );
@@ -95,15 +95,25 @@ class _VerseSearchScreenState extends State<VerseSearchScreen> {
                   controller: _searchController,
                   decoration: InputDecoration(
                     hintText: _isReferenceSearch
-                        ? '예: 마태복음 1:13'
+                        ? '예: 마태복음 1:13 또는 마태복음 1'
                         : '예: 사랑',
                     prefixIcon: const Icon(Icons.search),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        context.read<BibleViewModel>().clearSearchResults();
-                      },
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          tooltip: '검색 추가',
+                          onPressed: () => _performSearch(_searchController.text),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          tooltip: '결과 초기화',
+                          onPressed: () {
+                            context.read<BibleViewModel>().clearSearchResults();
+                          },
+                        ),
+                      ],
                     ),
                   ),
                   onSubmitted: _performSearch,
@@ -146,82 +156,105 @@ class _VerseSearchScreenState extends State<VerseSearchScreen> {
                   );
                 }
 
-                // 구절 참조 검색 결과
-                if (_isReferenceSearch && viewModel.selectedVerse != null) {
-                  final verse = viewModel.selectedVerse!;
-                  return ListView(
-                    padding: const EdgeInsets.all(16),
+                // 검색 결과 (구절 참조 및 키워드 검색 모두)
+                if (viewModel.searchResults.isNotEmpty) {
+                  return Column(
                     children: [
-                      Card(
-                        child: InkWell(
-                          onTap: () => _selectVerse(verse.fullText),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  verse.reference,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(
-                                        color: Theme.of(context).colorScheme.primary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  verse.text,
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                ),
-                              ],
+                      // 결과 개수 표시
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '검색 결과: ${viewModel.searchResults.length}개',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                             ),
-                          ),
+                            TextButton.icon(
+                              icon: const Icon(Icons.select_all, size: 18),
+                              label: const Text('모두 선택'),
+                              onPressed: () => _selectAllVerses(viewModel.searchResults),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // 검색 결과 리스트
+                      Expanded(
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: viewModel.searchResults.length,
+                          itemBuilder: (context, index) {
+                            final verse = viewModel.searchResults[index];
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              child: InkWell(
+                                onTap: () => _selectVerse(verse.fullText),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          // 버전 뱃지
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: verse.version == AppConstants.versionKorean
+                                                  ? Colors.blue.shade100
+                                                  : Colors.green.shade100,
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              verse.version == AppConstants.versionKorean
+                                                  ? '개혁개정'
+                                                  : 'NIV',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                                color: verse.version == AppConstants.versionKorean
+                                                    ? Colors.blue.shade900
+                                                    : Colors.green.shade900,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              verse.reference,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleMedium
+                                                  ?.copyWith(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .primary,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        verse.text,
+                                        style: Theme.of(context).textTheme.bodyLarge,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
-                  );
-                }
-
-                // 키워드 검색 결과
-                if (!_isReferenceSearch && viewModel.searchResults.isNotEmpty) {
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: viewModel.searchResults.length,
-                    itemBuilder: (context, index) {
-                      final verse = viewModel.searchResults[index];
-                      return Card(
-                        child: InkWell(
-                          onTap: () => _selectVerse(verse.fullText),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  verse.reference,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(
-                                        color: Theme.of(context).colorScheme.primary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  verse.text,
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
                   );
                 }
 
@@ -241,7 +274,7 @@ class _VerseSearchScreenState extends State<VerseSearchScreen> {
                       const SizedBox(height: 16),
                       Text(
                         _isReferenceSearch
-                            ? '성경 구절을 입력하세요\n예: 마태복음 1:13'
+                            ? '성경 구절을 입력하세요\n예: 마태복음 1:13 또는 마태복음 1'
                             : '검색할 키워드를 입력하세요\n예: 사랑, 믿음',
                         style: Theme.of(context).textTheme.bodyMedium,
                         textAlign: TextAlign.center,
@@ -273,5 +306,13 @@ class _VerseSearchScreenState extends State<VerseSearchScreen> {
   /// 구절 선택
   void _selectVerse(String verseText) {
     Navigator.pop(context, verseText);
+  }
+
+  /// 모든 구절 선택
+  void _selectAllVerses(List<dynamic> verses) {
+    final allText = verses
+        .map((v) => v.fullText)
+        .join('\n\n');
+    Navigator.pop(context, allText);
   }
 }

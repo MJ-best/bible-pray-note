@@ -14,67 +14,103 @@ class BibleViewModel extends ChangeNotifier {
   BibleVerse? _selectedVerse;
   bool _isLoading = false;
   String? _error;
-  String _currentVersion = AppConstants.versionKorean;
+  final Set<String> _selectedVersions = {AppConstants.versionKorean};
 
   // Getters
   List<BibleVerse> get searchResults => _searchResults;
   BibleVerse? get selectedVerse => _selectedVerse;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  String get currentVersion => _currentVersion;
+  Set<String> get selectedVersions => _selectedVersions;
 
-  /// 역본 변경
-  void setVersion(String version) {
-    _currentVersion = version;
+  /// 역본이 선택되어 있는지 확인
+  bool isVersionSelected(String version) => _selectedVersions.contains(version);
+
+  /// 역본 토글 (다중 선택 가능)
+  void toggleVersion(String version) {
+    if (_selectedVersions.contains(version)) {
+      // 최소 하나의 버전은 선택되어 있어야 함
+      if (_selectedVersions.length > 1) {
+        _selectedVersions.remove(version);
+      }
+    } else {
+      _selectedVersions.add(version);
+    }
     notifyListeners();
   }
 
-  /// 성경 구절 참조로 검색
-  /// 예: "마태복음 1:13", "창 1:1"
-  Future<BibleVerse?> searchByReference(String reference) async {
+  /// 성경 구절 참조로 검색 (범위 검색 지원)
+  /// 예: "마태복음 1:13" (단일 구절), "마태복음 1" (1장 전체)
+  Future<void> searchByReference(String reference) async {
     _setLoading(true);
     _error = null;
 
     try {
-      // 정규표현식으로 파싱
-      final match = AppConstants.verseReferencePattern.firstMatch(reference);
-      if (match == null) {
-        _error = '올바른 성경 구절 형식이 아닙니다. 예: "마태복음 1:13"';
+      // 패턴 1: "마태복음 1:13" 형식 (책 장:절)
+      final verseMatch = RegExp(r'([가-힣a-zA-Z]+)\s*(\d+):(\d+)').firstMatch(reference);
+
+      // 패턴 2: "마태복음 1" 형식 (책 장)
+      final chapterMatch = RegExp(r'([가-힣a-zA-Z]+)\s*(\d+)$').firstMatch(reference);
+
+      List<BibleVerse> newResults = [];
+
+      if (verseMatch != null) {
+        // 단일 구절 검색
+        final book = verseMatch.group(1)!;
+        final chapter = int.parse(verseMatch.group(2)!);
+        final verse = int.parse(verseMatch.group(3)!);
+
+        // 선택된 모든 버전에 대해 검색
+        for (final version in _selectedVersions) {
+          final result = await _repository.getVerseByReference(
+            version: version,
+            book: book,
+            chapter: chapter,
+            verse: verse,
+          );
+          if (result != null) {
+            newResults.add(result);
+          }
+        }
+      } else if (chapterMatch != null) {
+        // 장 전체 검색
+        final book = chapterMatch.group(1)!;
+        final chapter = int.parse(chapterMatch.group(2)!);
+
+        // 선택된 모든 버전에 대해 검색
+        for (final version in _selectedVersions) {
+          final verses = await _repository.getVersesByChapter(
+            version: version,
+            book: book,
+            chapter: chapter,
+          );
+          newResults.addAll(verses);
+        }
+      } else {
+        _error = '올바른 성경 구절 형식이 아닙니다.\n예: "마태복음 1:13" 또는 "마태복음 1"';
         notifyListeners();
-        return null;
+        return;
       }
 
-      final book = match.group(1)!;
-      final chapter = int.parse(match.group(2)!);
-      final verse = int.parse(match.group(3)!);
-
-      _selectedVerse = await _repository.getVerseByReference(
-        version: _currentVersion,
-        book: book,
-        chapter: chapter,
-        verse: verse,
-      );
-
-      if (_selectedVerse == null) {
+      if (newResults.isEmpty) {
         _error = '해당 구절을 찾을 수 없습니다.';
+      } else {
+        // 누적 검색: 기존 결과에 추가
+        _searchResults.addAll(newResults);
       }
 
       notifyListeners();
-      return _selectedVerse;
     } catch (e) {
       _error = '구절 검색에 실패했습니다: $e';
       notifyListeners();
-      return null;
     } finally {
       _setLoading(false);
     }
   }
 
-  /// 키워드로 성경 구절 검색
+  /// 키워드로 성경 구절 검색 (누적 검색, 다중 버전 지원)
   Future<void> searchByKeyword(String keyword) async {
     if (keyword.trim().isEmpty) {
-      _searchResults = [];
-      notifyListeners();
       return;
     }
 
@@ -82,13 +118,22 @@ class BibleViewModel extends ChangeNotifier {
     _error = null;
 
     try {
-      _searchResults = await _repository.searchVerses(
-        version: _currentVersion,
-        keyword: keyword,
-      );
+      List<BibleVerse> newResults = [];
 
-      if (_searchResults.isEmpty) {
+      // 선택된 모든 버전에 대해 검색
+      for (final version in _selectedVersions) {
+        final verses = await _repository.searchVerses(
+          version: version,
+          keyword: keyword,
+        );
+        newResults.addAll(verses);
+      }
+
+      if (newResults.isEmpty) {
         _error = '검색 결과가 없습니다.';
+      } else {
+        // 누적 검색: 기존 결과에 추가
+        _searchResults.addAll(newResults);
       }
 
       notifyListeners();
