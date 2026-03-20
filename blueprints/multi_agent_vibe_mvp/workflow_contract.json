@@ -1,0 +1,66 @@
+{
+  "version": "1.0.0",
+  "mode": "workflow-first",
+  "input_contract": {
+    "required_keys": ["project_goal"],
+    "optional_keys": ["workspace_name", "project_name", "seed_context"],
+    "validation": {
+      "project_goal": {
+        "type": "string",
+        "min_length": 1
+      }
+    }
+  },
+  "states": ["planned", "running", "blocked", "completed", "failed"],
+  "stages": [
+    {
+      "id": "orchestrator",
+      "owner": "orchestrator",
+      "inputs": ["project_goal"],
+      "outputs": ["execution_plan", "task_graph", "artifact_index", "run_log"]
+    },
+    {
+      "id": "pm",
+      "owner": "pm",
+      "inputs": ["project_goal", "execution_plan"],
+      "outputs": ["prd", "feature_list", "user_flow", "acceptance_criteria", "open_questions"]
+    },
+    {
+      "id": "system_designer",
+      "owner": "system_designer",
+      "inputs": ["project_goal", "prd", "feature_list", "user_flow"],
+      "outputs": ["tables", "relationships", "rls_policies", "indexes", "constraints", "migration_notes", "schema_sql"]
+    },
+    {
+      "id": "flutter",
+      "owner": "flutter",
+      "inputs": ["project_goal", "prd", "feature_list", "user_flow", "schema_sql", "rls_policies"],
+      "outputs": ["folder_structure", "routes", "screens", "widgets", "state_flow", "implementation_notes", "flutter_code"]
+    },
+    {
+      "id": "qa",
+      "owner": "qa",
+      "inputs": ["all_artifacts"],
+      "outputs": ["issues", "risk_level", "missing_cases", "verification_checklist", "pass_fail"]
+    }
+  ],
+  "routing_rules": {
+    "empty_goal": "blocked",
+    "missing_fields_retry": 1,
+    "qa_blocking_fix_rounds": 1,
+    "supersede_duplicate_artifact": true
+  },
+  "artifact_index_contract": {
+    "artifact_types": [
+      "prd",
+      "feature_list",
+      "user_flow",
+      "schema_sql",
+      "rls_policies",
+      "flutter_code",
+      "qa_report"
+    ],
+    "versioning": "latest_wins",
+    "partial_artifacts": "preserve"
+  }
+}

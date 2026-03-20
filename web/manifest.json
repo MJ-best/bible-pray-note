@@ -1,11 +1,11 @@
 {
-    "name": "bible_pray_note",
-    "short_name": "bible_pray_note",
+    "name": "Artifact Flow",
+    "short_name": "ArtifactFlow",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Workflow-first multi-agent vibe coding MVP built with Flutter and Supabase.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

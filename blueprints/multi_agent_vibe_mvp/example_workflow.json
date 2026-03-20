@@ -1,0 +1,125 @@
+{
+  "project_goal": "Build a production-ready MVP of a multi-agent vibe coding platform using Flutter and Supabase.",
+  "workflow_contract": "workflow_contract.json",
+  "artifact_schemas": "artifact_schemas.json",
+  "task_graph": [
+    {
+      "id": "t1",
+      "owner": "orchestrator",
+      "depends_on": [],
+      "status": "completed"
+    },
+    {
+      "id": "t2",
+      "owner": "pm",
+      "depends_on": ["t1"],
+      "status": "completed"
+    },
+    {
+      "id": "t3",
+      "owner": "system_designer",
+      "depends_on": ["t2"],
+      "status": "completed"
+    },
+    {
+      "id": "t4",
+      "owner": "flutter",
+      "depends_on": ["t2", "t3"],
+      "status": "completed"
+    },
+    {
+      "id": "t5",
+      "owner": "qa",
+      "depends_on": ["t2", "t3", "t4"],
+      "status": "completed"
+    }
+  ],
+  "artifact_index": {
+    "latest": {
+      "prd": "artifacts/prd/v1.json",
+      "schema_sql": "artifacts/schema_sql/v1.sql",
+      "flutter_code": "artifacts/flutter_code/v1.md",
+      "qa_report": "artifacts/qa_report/v1.json"
+    },
+    "superseded": [],
+    "partial": []
+  },
+  "execution_plan": {
+    "status": "completed",
+    "steps": [
+      {
+        "id": "plan",
+        "owner": "orchestrator",
+        "status": "completed",
+        "outputs": ["execution_plan", "task_graph"]
+      },
+      {
+        "id": "prd",
+        "owner": "pm",
+        "status": "completed",
+        "outputs": ["prd", "feature_list", "user_flow", "acceptance_criteria"]
+      },
+      {
+        "id": "schema",
+        "owner": "system_designer",
+        "status": "completed",
+        "outputs": ["schema_sql", "relationships", "rls_policies"]
+      },
+      {
+        "id": "flutter_skeleton",
+        "owner": "flutter",
+        "status": "completed",
+        "outputs": ["folder_structure", "routes", "flutter_code"]
+      },
+      {
+        "id": "review",
+        "owner": "qa",
+        "status": "completed",
+        "outputs": ["issues", "verification_checklist", "pass_fail"]
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "artifact_type": "prd",
+      "version": 1,
+      "status": "ready"
+    },
+    {
+      "artifact_type": "schema_sql",
+      "version": 1,
+      "status": "ready"
+    },
+    {
+      "artifact_type": "flutter_code",
+      "version": 1,
+      "status": "ready"
+    },
+    {
+      "artifact_type": "qa_report",
+      "version": 1,
+      "status": "ready"
+    }
+  ],
+  "qa_summary": {
+    "pass_fail": "pass_with_notes",
+    "issues": [
+      "Ensure OAuth redirect failure is surfaced in login flow.",
+      "Enforce task idempotency on duplicate execution attempts.",
+      "Handle partial artifact generation in project detail UI."
+    ],
+    "risk_level": "medium",
+    "missing_cases": [
+      "Unauthenticated deep link into `/projects/:id`",
+      "Duplicate artifact version write when a task is retried",
+      "RLS deny path for non-members"
+    ],
+    "verification_checklist": [
+      "Goal validation blocks empty input",
+      "PM output includes acceptance criteria",
+      "Schema includes default-deny RLS",
+      "Flutter output is workflow-first",
+      "QA report calls out blocking gaps"
+    ]
+  }
+}

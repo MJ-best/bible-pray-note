@@ -1,0 +1,175 @@
+{
+  "version": "1.0.0",
+  "product": "multi-agent vibe coding platform MVP",
+  "workflow_contract": "workflow_contract.json",
+  "artifact_schemas": "artifact_schemas.json",
+  "input_contract": {
+    "required_user_inputs": ["project_goal"],
+    "system_generated": [
+      "execution_plan",
+      "task_graph",
+      "artifact_index",
+      "run_log"
+    ]
+  },
+  "output_order": [
+    "project_structure",
+    "supabase_schema_sql",
+    "flutter_app_skeleton_code",
+    "agent_definitions",
+    "example_workflow_execution",
+    "rls_policies",
+    "minimal_working_ui_flutter_code"
+  ],
+  "repair_policy": {
+    "max_retries_per_agent": 1,
+    "route_only_to_original_owner": true,
+    "mark_failed_after_second_attempt": true,
+    "preserve_partial_artifacts": true
+  },
+  "artifact_contracts": {
+    "prd": "artifact_schemas.json#prd",
+    "feature_list": "artifact_schemas.json#feature_list",
+    "user_flow": "artifact_schemas.json#user_flow",
+    "schema_sql": "artifact_schemas.json#schema_sql",
+    "rls_policies": "artifact_schemas.json#rls_policies",
+    "flutter_code": "artifact_schemas.json#flutter_code",
+    "qa_report": "artifact_schemas.json#qa_report"
+  },
+  "agents": [
+    {
+      "id": "orchestrator",
+      "role": "Orchestrator Agent",
+      "system_prompt_path": "prompts/orchestrator.md",
+      "depends_on": [],
+      "input_keys": ["project_goal"],
+      "output_keys": ["execution_plan", "task_graph", "artifact_index", "run_log"],
+      "responsibility": [
+        "validate project_goal",
+        "plan workflow",
+        "assign tasks",
+        "aggregate artifacts",
+        "manage repair loop"
+      ],
+      "must_not_do": [
+        "rewrite specialist artifacts directly",
+        "invent extra agents outside the configured set",
+        "skip required output order"
+      ],
+      "primary_outputs": [
+        "execution_plan",
+        "task_graph",
+        "artifact_index",
+        "run_log"
+      ]
+    },
+    {
+      "id": "pm",
+      "role": "PM Agent",
+      "system_prompt_path": "prompts/pm.md",
+      "depends_on": ["orchestrator"],
+      "input_keys": ["project_goal"],
+      "output_keys": ["prd", "feature_list", "user_flow", "acceptance_criteria", "open_questions"],
+      "responsibility": [
+        "define product scope",
+        "generate PRD",
+        "list MVP features",
+        "describe user flow"
+      ],
+      "must_not_do": [
+        "design database schema",
+        "write Flutter code",
+        "perform QA signoff"
+      ],
+      "primary_outputs": [
+        "prd",
+        "feature_list",
+        "user_flow",
+        "acceptance_criteria",
+        "open_questions"
+      ]
+    },
+    {
+      "id": "system_designer",
+      "role": "System Designer Agent",
+      "system_prompt_path": "prompts/system_designer.md",
+      "depends_on": ["pm"],
+      "input_keys": ["project_goal", "prd", "feature_list", "user_flow"],
+      "output_keys": ["tables", "relationships", "rls_policies", "indexes", "constraints", "migration_notes", "schema_sql"],
+      "responsibility": [
+        "design Supabase schema",
+        "define foreign keys and ownership",
+        "write RLS strategy",
+        "set indexes and idempotency constraints"
+      ],
+      "must_not_do": [
+        "change product scope",
+        "write UI code",
+        "edit PM artifact wording"
+      ],
+      "primary_outputs": [
+        "tables",
+        "relationships",
+        "rls_policies",
+        "indexes",
+        "constraints",
+        "migration_notes",
+        "schema_sql"
+      ]
+    },
+    {
+      "id": "flutter",
+      "role": "Flutter Agent",
+      "system_prompt_path": "prompts/flutter.md",
+      "depends_on": ["pm", "system_designer"],
+      "input_keys": ["project_goal", "prd", "feature_list", "user_flow", "schema_sql", "rls_policies"],
+      "output_keys": ["folder_structure", "routes", "screens", "widgets", "state_flow", "implementation_notes", "flutter_code"],
+      "responsibility": [
+        "define Flutter app structure",
+        "generate workflow-first UI skeleton",
+        "set routing and state management shape",
+        "produce minimal UI code"
+      ],
+      "must_not_do": [
+        "change database design",
+        "change PRD scope",
+        "self-approve quality gaps"
+      ],
+      "primary_outputs": [
+        "folder_structure",
+        "routes",
+        "screens",
+        "widgets",
+        "state_flow",
+        "implementation_notes",
+        "flutter_code"
+      ]
+    },
+    {
+      "id": "qa",
+      "role": "QA Agent",
+      "system_prompt_path": "prompts/qa.md",
+      "depends_on": ["pm", "system_designer", "flutter"],
+      "input_keys": ["all_artifacts"],
+      "output_keys": ["issues", "risk_level", "missing_cases", "verification_checklist", "pass_fail"],
+      "responsibility": [
+        "check completeness",
+        "validate edge cases",
+        "detect responsibility overlap",
+        "assess release readiness"
+      ],
+      "must_not_do": [
+        "rewrite artifacts",
+        "introduce new scope",
+        "replace owner agents"
+      ],
+      "primary_outputs": [
+        "issues",
+        "risk_level",
+        "missing_cases",
+        "verification_checklist",
+        "pass_fail"
+      ]
+    }
+  ]
+}

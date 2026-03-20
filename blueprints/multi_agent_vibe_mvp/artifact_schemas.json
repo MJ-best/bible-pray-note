@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "artifacts": {
+    "prd": {
+      "required_keys": ["summary", "problem", "goals", "non_goals", "personas", "success_metrics", "scope"],
+      "format": "json"
+    },
+    "feature_list": {
+      "required_keys": ["mvp_features", "future_features", "edge_cases"],
+      "format": "json"
+    },
+    "user_flow": {
+      "required_keys": ["entry", "steps", "states", "failure_paths"],
+      "format": "json"
+    },
+    "schema_sql": {
+      "required_keys": ["migrations", "tables", "rls", "indexes", "triggers"],
+      "format": "sql"
+    },
+    "rls_policies": {
+      "required_keys": ["default_deny", "table_policies", "service_role_notes"],
+      "format": "json"
+    },
+    "flutter_code": {
+      "required_keys": ["pubspec", "lib_structure", "router", "screens", "state_management", "run_instructions"],
+      "format": "markdown_plus_code"
+    },
+    "qa_report": {
+      "required_keys": ["issues", "risk_level", "missing_cases", "verification_checklist", "pass_fail"],
+      "format": "json"
+    }
+  }
+}
